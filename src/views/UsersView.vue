@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { supabase } from '../lib/supabase'
+import { Plus, UserPlus } from '@lucide/vue'
 
 const users = ref([])
 const loading = ref(true)
@@ -44,12 +45,20 @@ onMounted(muat)
 
 <template>
   <div>
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
-      <h1>Users</h1>
-      <button class="btn" @click="showForm = !showForm">{{ showForm ? 'Batal' : '+ Tambah User' }}</button>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px">
+      <div>
+        <h1 style="margin-bottom:4px">Users</h1>
+        <p style="color:var(--text-muted); margin:0; font-size:13px">Kelola akun petugas &amp; admin yang boleh mengakses sistem.</p>
+      </div>
+      <button class="btn" style="display:flex; align-items:center; gap:6px" @click="showForm = !showForm">
+        <Plus :size="16" /> {{ showForm ? 'Batal' : 'Tambah User' }}
+      </button>
     </div>
 
     <form v-if="showForm" class="card" style="margin-bottom:20px; display:grid; gap:12px; grid-template-columns:1fr 1fr" @submit.prevent="tambahUser">
+      <div style="grid-column:1/-1; display:flex; align-items:center; gap:8px; color:var(--text-muted); font-size:13px; margin-bottom:-4px">
+        <UserPlus :size="15" /> Akun baru langsung aktif, tanpa perlu verifikasi email
+      </div>
       <div><label>Nama</label><input v-model="form.nama" required /></div>
       <div><label>Email</label><input v-model="form.email" type="email" required /></div>
       <div><label>Password sementara</label><input v-model="form.password" type="text" minlength="6" required /></div>

@@ -33,8 +33,8 @@ async function submit() {
 <template>
   <div class="wrap">
     <form class="card" style="width:340px" @submit.prevent="submit">
-      <h2 style="margin-bottom:4px">Tank Report</h2>
-      <p style="color:var(--text-muted); margin:0 0 20px">Masuk sebagai admin</p>
+      <h2 style="margin-bottom:4px">DIGISAFPAT</h2>
+      <p style="color:var(--text-muted); margin:0 0 20px">Digital Safety Patrol &mdash; Masuk sebagai admin</p>
 
       <label>Email</label>
       <input v-model="email" type="email" required style="margin-bottom:14px" />

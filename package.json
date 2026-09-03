@@ -1,5 +1,5 @@
 {
-  "name": "tank-report-dashboard",
+  "name": "digisafpat-dashboard",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@lucide/vue": "^1.40.0",
     "@supabase/supabase-js": "^2.112.4",
+    "jspdf": "^4.2.1",
     "vue": "^3.5.41",
     "vue-router": "^4.6.4"
   },
