@@ -3,6 +3,7 @@ import { onMounted, watch } from 'vue'
 import { sudahDikonfigurasi } from './lib/supabase'
 import { authState, initAuth, logout } from './lib/auth'
 import { initAutoLogout } from './lib/idle'
+import { muatDepots } from './lib/depots'
 import { useRouter, useRoute } from 'vue-router'
 import { LayoutDashboard, Users, FileText, LogOut, ShieldCheck } from '@lucide/vue'
 
@@ -19,6 +20,7 @@ watch(
     if (user && !autoLogoutTerpasang) {
       autoLogoutTerpasang = true
       initAutoLogout()
+      muatDepots()
     }
   }
 )
@@ -71,7 +73,9 @@ const menu = [
       <div class="sidebar-foot">
         <div class="me">
           <div class="me-name">{{ authState.profil?.nama || authState.user.email }}</div>
-          <div class="me-role">Admin</div>
+          <div class="me-role">
+            {{ authState.profil?.role === 'superadmin' ? 'Superadmin \u2014 Semua Depot' : authState.profil?.role === 'admin' ? `Admin \u2014 ${authState.profil?.depots?.nama || '-'}` : 'Admin' }}
+          </div>
         </div>
         <button class="logout-btn" @click="keluar">
           <LogOut :size="16" /> Keluar

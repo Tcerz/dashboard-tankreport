@@ -9,7 +9,7 @@ export const authState = reactive({
 
 export async function muatProfil() {
   if (!authState.user) { authState.profil = null; return }
-  const { data } = await supabase.from('profiles').select().eq('id', authState.user.id).maybeSingle()
+  const { data } = await supabase.from('profiles').select('*, depots(nama)').eq('id', authState.user.id).maybeSingle()
   authState.profil = data
 }
 
@@ -34,4 +34,5 @@ export async function logout() {
   await supabase.auth.signOut()
 }
 
-export const isAdmin = () => authState.profil?.role === 'admin'
+export const isAdmin = () => ['admin', 'superadmin'].includes(authState.profil?.role)
+export const isSuperadmin = () => authState.profil?.role === 'superadmin'

@@ -1,6 +1,8 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from '../lib/supabase'
+import { isSuperadmin } from '../lib/auth'
+import { depots, depotFilter, muatDepots } from '../lib/depots'
 import { AlertTriangle, FileWarning, Users as UsersIcon, ClipboardList, Image as ImageIcon } from '@lucide/vue'
 
 const reports = ref([])
@@ -8,17 +10,26 @@ const users = ref([])
 const totalFoto = ref(0)
 const loading = ref(true)
 
-onMounted(async () => {
-  const [r, u, f] = await Promise.all([
-    supabase.from('reports').select('id, created_at, loading_data, discharge_data, penyaluran_data, storage_data'),
-    supabase.from('profiles').select('id, status'),
-    supabase.from('report_photos').select('id', { count: 'exact', head: true }),
-  ])
+async function muat() {
+  loading.value = true
+  let qReports = supabase.from('reports').select('id, created_at, loading_data, discharge_data, penyaluran_data, storage_data')
+  let qUsers = supabase.from('profiles').select('id, status')
+  let qFoto = supabase.from('report_photos').select('id, reports!inner(depot_id)', { count: 'exact', head: true })
+
+  if (isSuperadmin() && depotFilter.value) {
+    qReports = qReports.eq('depot_id', depotFilter.value)
+    qUsers = qUsers.eq('depot_id', depotFilter.value)
+    qFoto = qFoto.eq('reports.depot_id', depotFilter.value)
+  }
+
+  const [r, u, f] = await Promise.all([qReports, qUsers, qFoto])
   reports.value = r.data || []
   users.value = u.data || []
   totalFoto.value = f.count || 0
   loading.value = false
-})
+}
+onMounted(() => { muat(); muatDepots() })
+watch(depotFilter, muat)
 
 function parse(json) { try { return JSON.parse(json || '{}') } catch { return {} } }
 function top(list, ambil = 5) {
@@ -99,8 +110,19 @@ const maxBulan = computed(() => Math.max(1, ...enamBulan.value.map((b) => b.juml
 
 <template>
   <div>
-    <h1 style="margin-bottom:4px">Statistik</h1>
-    <p style="color:var(--text-muted); margin:0 0 20px; font-size:13px">Ringkasan diambil dari seluruh laporan patroli yang sudah masuk.</p>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:20px; flex-wrap:wrap; gap:10px">
+      <div>
+        <h1 style="margin-bottom:4px">Statistik</h1>
+        <p style="color:var(--text-muted); margin:0; font-size:13px">Ringkasan diambil dari seluruh laporan patroli yang sudah masuk.</p>
+      </div>
+      <div v-if="isSuperadmin()" style="display:flex; align-items:center; gap:8px">
+        <label style="margin:0; white-space:nowrap">Depot:</label>
+        <select v-model="depotFilter" style="width:auto; min-width:180px">
+          <option value="">Semua Depot</option>
+          <option v-for="d in depots" :key="d.id" :value="d.id">{{ d.nama }}</option>
+        </select>
+      </div>
+    </div>
 
     <template v-if="!loading">
       <div class="grid-5">

@@ -17,26 +17,33 @@ Deno.serve(async (req) => {
   if (!caller.user) return new Response('Unauthorized', { status: 401, headers: corsHeaders })
 
   const { data: callerProfile } = await admin
-    .from('profiles').select('role').eq('id', caller.user.id).single()
-  if (callerProfile?.role !== 'admin') {
-    return new Response('Hanya admin yang boleh melakukan ini', { status: 403, headers: corsHeaders })
+    .from('profiles').select('role, depot_id').eq('id', caller.user.id).single()
+  const isSuperadmin = callerProfile?.role === 'superadmin'
+  const isAdmin = callerProfile?.role === 'admin'
+  if (!isSuperadmin && !isAdmin) {
+    return new Response('Hanya admin/superadmin yang boleh melakukan ini', { status: 403, headers: corsHeaders })
   }
 
   const { action, userId, password } = await req.json()
+  if (userId === caller.user.id) {
+    return new Response('Tidak bisa melakukan ini pada akun sendiri', { status: 400, headers: corsHeaders })
+  }
+
+  // Admin biasa (bukan superadmin) hanya boleh kelola akun di depot sendiri.
+  if (isAdmin) {
+    const { data: target } = await admin.from('profiles').select('depot_id').eq('id', userId).single()
+    if (!target || target.depot_id !== callerProfile.depot_id) {
+      return new Response('Tidak boleh mengelola akun di luar depot Anda', { status: 403, headers: corsHeaders })
+    }
+  }
 
   if (action === 'reset_password') {
-    if (userId === caller.user.id) {
-      return new Response('Tidak bisa reset password akun sendiri lewat sini', { status: 400, headers: corsHeaders })
-    }
     const { error } = await admin.auth.admin.updateUserById(userId, { password })
     if (error) return new Response(error.message, { status: 400, headers: corsHeaders })
     return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 
   if (action === 'delete') {
-    if (userId === caller.user.id) {
-      return new Response('Tidak bisa menghapus akun sendiri', { status: 400, headers: corsHeaders })
-    }
     // Menghapus dari auth.users otomatis ikut menghapus baris profiles (ON DELETE CASCADE).
     const { error } = await admin.auth.admin.deleteUser(userId)
     if (error) return new Response(error.message, { status: 400, headers: corsHeaders })

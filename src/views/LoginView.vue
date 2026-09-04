@@ -18,7 +18,7 @@ async function submit() {
     await new Promise((r) => setTimeout(r, 300))
     if (!isAdmin()) {
       await logout()
-      error.value = 'Akun ini bukan admin. Dashboard hanya untuk admin.'
+      error.value = 'Akun ini bukan admin/superadmin. Dashboard hanya untuk admin.'
       return
     }
     router.push({ name: 'statistik' })

@@ -1,7 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { supabase } from '../lib/supabase'
 import { buatPdfLaporan } from '../lib/pdf'
+import { isSuperadmin } from '../lib/auth'
+import { depots, depotFilter, muatDepots } from '../lib/depots'
 import { X, FileText, Loader2, Download } from '@lucide/vue'
 
 const laporan = ref([])
@@ -15,11 +17,15 @@ const membuatPdf = ref(false)
 const pdfUrl = ref('')
 
 async function muat() {
-  const { data } = await supabase.from('reports').select('*').order('created_at', { ascending: false })
+  loading.value = true
+  let q = supabase.from('reports').select('*, depots(nama)').order('created_at', { ascending: false })
+  if (isSuperadmin() && depotFilter.value) q = q.eq('depot_id', depotFilter.value)
+  const { data } = await q
   laporan.value = data || []
   loading.value = false
 }
-onMounted(muat)
+onMounted(() => { muat(); muatDepots() })
+watch(depotFilter, muat)
 
 async function bukaDetail(l) {
   dipilih.value = l
@@ -64,19 +70,29 @@ function kondisiClass(k) {
 <template>
   <div>
     <h1 style="margin-bottom:4px">Laporan Masuk</h1>
-    <p style="color:var(--text-muted); margin:0 0 20px; font-size:13px">Klik salah satu baris untuk melihat detail laporan beserta foto.</p>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:20px; flex-wrap:wrap; gap:10px">
+      <p style="color:var(--text-muted); margin:0; font-size:13px">Klik salah satu baris untuk melihat detail laporan beserta foto.</p>
+      <div v-if="isSuperadmin()" style="display:flex; align-items:center; gap:8px">
+        <label style="margin:0; white-space:nowrap">Depot:</label>
+        <select v-model="depotFilter" style="width:auto; min-width:180px">
+          <option value="">Semua Depot</option>
+          <option v-for="d in depots" :key="d.id" :value="d.id">{{ d.nama }}</option>
+        </select>
+      </div>
+    </div>
 
     <div class="card" style="padding:0">
       <table>
         <thead>
-          <tr><th>Tanggal</th><th>Jam Patroli</th><th>PIC</th><th>Dibuat Oleh</th><th>Waktu Upload</th></tr>
+          <tr><th>Tanggal</th><th>Jam Patroli</th><th v-if="isSuperadmin()">Depot</th><th>PIC</th><th>Dibuat Oleh</th><th>Waktu Upload</th></tr>
         </thead>
         <tbody>
-          <tr v-if="loading"><td colspan="5" style="text-align:center; color:var(--text-muted)">Memuat…</td></tr>
-          <tr v-else-if="!laporan.length"><td colspan="5" style="text-align:center; color:var(--text-muted)">Belum ada laporan masuk</td></tr>
+          <tr v-if="loading"><td colspan="6" style="text-align:center; color:var(--text-muted)">Memuat…</td></tr>
+          <tr v-else-if="!laporan.length"><td colspan="6" style="text-align:center; color:var(--text-muted)">Belum ada laporan masuk</td></tr>
           <tr v-for="l in laporan" :key="l.id" class="row-click" @click="bukaDetail(l)">
             <td>{{ l.tanggal }}</td>
             <td>{{ l.jam_patroli }}</td>
+            <td v-if="isSuperadmin()">{{ l.depots?.nama || '-' }}</td>
             <td>{{ l.pic_patroli }}</td>
             <td>{{ l.nama_pembuat }}</td>
             <td>{{ new Date(l.created_at).toLocaleString('id-ID') }}</td>
