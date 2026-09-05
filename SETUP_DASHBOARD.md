@@ -10,12 +10,14 @@
 7. Aktifkan / nonaktifkan user.
 8. Daftar laporan (dengan dropdown filter depot untuk superadmin) — klik baris untuk detail + foto + **PDF formal** via side panel.
 9. Statistik lengkap (juga bisa difilter per depot): total laporan, user aktif, temuan tidak aman (total & per jenis kegiatan), tangki sering "Off", personel teraktif, produk teratas, tren 7 hari & 6 bulan.
-10. Auto-logout 15 menit tidak aktif.
+10. **Hapus laporan** (khusus superadmin) — di panel detail laporan, dengan verifikasi wajib mengetik ulang nama petugas pembuat laporan sebelum benar-benar terhapus. Foto lampiran di storage ikut dihapus.
+11. Auto-logout 15 menit tidak aktif.
 
 ## Prasyarat backend
 Jalankan **berurutan** di SQL Editor Supabase:
 1. `supabase/schema.sql` (kalau project baru / belum pernah dijalankan sama sekali)
-2. `supabase/migration_02_depot_role.sql` (menambahkan sistem depot & superadmin — aman dijalankan walau sudah ada data)
+2. `supabase/migration_02_depot_role.sql` (sistem depot & superadmin)
+3. `supabase/migration_03_hapus_laporan.sql` (izin hapus laporan untuk superadmin)
 
 Setelah migrasi, **wajib** dilakukan manual sekali (lihat komentar di akhir file migrasi):
 - Tambahkan minimal 1 baris di tabel `depots` untuk tiap lokasi (mis. "Depot Siak", "Depot Medan", dst).

@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { buatPdfLaporan } from '../lib/pdf'
 import { isSuperadmin } from '../lib/auth'
 import { depots, depotFilter, muatDepots } from '../lib/depots'
-import { X, FileText, Loader2, Download } from '@lucide/vue'
+import { X, FileText, Loader2, Download, Trash2 } from '@lucide/vue'
 
 const laporan = ref([])
 const loading = ref(true)
@@ -65,6 +65,45 @@ function unduhPdf() {
 function kondisiClass(k) {
   return String(k).toLowerCase() === 'tidak aman' ? 'badge-danger' : 'badge-success'
 }
+
+// --- Hapus laporan (superadmin, dengan verifikasi ketik nama petugas) ---
+const konfirmasiHapus = ref(false)
+const namaKetik = ref('')
+const menghapus = ref(false)
+const errorHapus = ref('')
+
+function bukaKonfirmasiHapus() {
+  namaKetik.value = ''
+  errorHapus.value = ''
+  konfirmasiHapus.value = true
+}
+
+async function hapusLaporan() {
+  if (namaKetik.value.trim() !== dipilih.value.nama_pembuat) {
+    errorHapus.value = 'Nama yang diketik tidak cocok dengan pembuat laporan.'
+    return
+  }
+  menghapus.value = true
+  errorHapus.value = ''
+  try {
+    // Hapus file foto di storage dulu (best-effort, tidak menghentikan proses kalau gagal).
+    const paths = fotoDipilih.value
+      .map((f) => f.photo_url.split('/laporan-foto/')[1])
+      .filter(Boolean)
+    if (paths.length) await supabase.storage.from('laporan-foto').remove(paths)
+
+    const { error } = await supabase.from('reports').delete().eq('id', dipilih.value.id)
+    if (error) throw error
+
+    konfirmasiHapus.value = false
+    tutupPanel()
+    await muat()
+  } catch (e) {
+    errorHapus.value = 'Gagal menghapus: ' + e.message
+  } finally {
+    menghapus.value = false
+  }
+}
 </script>
 
 <template>
@@ -116,9 +155,14 @@ function kondisiClass(k) {
 
       <!-- MODE: DETAIL -->
       <div v-if="mode === 'detail'" class="panel-body">
-        <button class="btn" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:18px" @click="tampilkanPdf">
-          <FileText :size="16" /> Tampilkan Laporan PDF
-        </button>
+        <div style="display:flex; gap:8px; margin-bottom:18px">
+          <button class="btn" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px" @click="tampilkanPdf">
+            <FileText :size="16" /> Tampilkan PDF
+          </button>
+          <button v-if="isSuperadmin()" class="btn-danger-outline" title="Hapus laporan" @click="bukaKonfirmasiHapus">
+            <Trash2 :size="16" />
+          </button>
+        </div>
 
         <p v-if="memuatDetail" style="color:var(--text-muted)">Memuat detail…</p>
 
@@ -175,6 +219,23 @@ function kondisiClass(k) {
         </template>
       </div>
     </aside>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div v-if="konfirmasiHapus" class="modal-overlay" @click.self="konfirmasiHapus = false">
+      <div class="modal">
+        <div class="modal-head"><h3>Hapus Laporan</h3><button class="icon-btn" @click="konfirmasiHapus = false"><X :size="16" /></button></div>
+        <p style="font-size:13px; color:var(--text-muted)">
+          Tindakan ini <strong>tidak bisa dibatalkan</strong>. Laporan, foto lampirannya akan dihapus permanen.
+          Untuk memastikan, ketik ulang nama petugas pembuat laporan ini:
+        </p>
+        <p style="font-size:14px; font-weight:700; background:var(--bg); padding:8px; border-radius:4px; text-align:center">{{ dipilih.nama_pembuat }}</p>
+        <input v-model="namaKetik" placeholder="Ketik nama di atas" style="margin:10px 0" @keyup.enter="hapusLaporan" />
+        <p v-if="errorHapus" style="color:var(--danger); font-size:13px">{{ errorHapus }}</p>
+        <button class="btn-danger" style="width:100%" :disabled="menghapus || !namaKetik.trim()" @click="hapusLaporan">
+          {{ menghapus ? 'Menghapus…' : 'Hapus Permanen' }}
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -214,4 +275,21 @@ function kondisiClass(k) {
 .pdf-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 100%; color: var(--text-muted); }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.btn-danger-outline {
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  padding: 0 14px;
+  border-radius: var(--radius);
+}
+.btn-danger-outline:hover { background: var(--danger-soft); }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(20,33,49,0.4);
+  display: flex; align-items: center; justify-content: center; z-index: 70;
+}
+.modal { background: #fff; border-radius: 8px; padding: 20px; width: 380px; max-width: 92vw; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.modal-head h3 { font-size: 16px; }
 </style>
