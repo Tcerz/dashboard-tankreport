@@ -1,8 +1,8 @@
 <script setup>
-import { onMounted, watch, ref } from 'vue'
+import { watch, ref } from 'vue'
 import { sudahDikonfigurasi } from './lib/supabase'
-import { authState, initAuth, logout } from './lib/auth'
-import { initAutoLogout } from './lib/idle'
+import { authState, logout } from './lib/auth'
+import { pasangPelacakAktivitas } from './lib/idle'
 import { muatDepots } from './lib/depots'
 import { useRouter, useRoute } from 'vue-router'
 import { LayoutDashboard, Users, FileText, LogOut, ShieldCheck, Menu, X } from '@lucide/vue'
@@ -12,17 +12,20 @@ const route = useRoute()
 let autoLogoutTerpasang = false
 const sidebarTerbuka = ref(false)
 
-onMounted(() => { if (sudahDikonfigurasi) initAuth() })
-
+// { immediate: true } penting: saat refresh, authState.user BISA SAJA sudah
+// bernilai isi sejak sebelum komponen ini dibuat (karena initAuth() di
+// main.js sudah selesai duluan) -- tanpa immediate, watcher ini tidak akan
+// pernah terpanggil untuk kasus sesi yang di-restore lewat refresh.
 watch(
   () => authState.user,
   (user) => {
     if (user && !autoLogoutTerpasang) {
       autoLogoutTerpasang = true
-      initAutoLogout()
+      pasangPelacakAktivitas()
       muatDepots()
     }
-  }
+  },
+  { immediate: true }
 )
 
 // Tutup sidebar otomatis tiap pindah halaman (khusus tampilan mobile).

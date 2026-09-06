@@ -12,6 +12,18 @@
 9. Statistik lengkap (juga bisa difilter per depot): total laporan, user aktif, temuan tidak aman (total & per jenis kegiatan), tangki sering "Off", personel teraktif, produk teratas, tren 7 hari & 6 bulan.
 10. **Hapus laporan** (khusus superadmin) — di panel detail laporan, dengan verifikasi wajib mengetik ulang nama petugas pembuat laporan sebelum benar-benar terhapus. Foto lampiran di storage ikut dihapus.
 11. Auto-logout 15 menit tidak aktif.
+12. **CAPTCHA di halaman login** (Cloudflare Turnstile) — mencegah bot/script mencoba login berkali-kali (brute-force/spam login). Opsional: kalau belum dikonfigurasi, login tetap berfungsi normal tanpa captcha.
+
+## Perbaikan bug: tampilan kacau / balik ke login saat refresh
+Sebelumnya ada race condition: Vue Router sempat mengambil keputusan sebelum status login selesai dicek ke Supabase, dan logika auto-logout 15 menit salah membaca stempel waktu lama. Keduanya sudah diperbaiki di `src/main.js` (menunggu cek sesi selesai dulu sebelum aplikasi dimulai) dan `src/lib/auth.js` + `src/lib/activity.js` (urutan cek idle yang benar). Tidak ada langkah setup tambahan untuk perbaikan ini — otomatis berlaku setelah deploy ulang.
+
+## Setup CAPTCHA (Cloudflare Turnstile)
+1. Daftar gratis di https://dash.cloudflare.com, buka menu **Turnstile**, klik **Add Site**.
+2. Isi domain Anda (mis. `digisafpat.vercel.app`), pilih mode **Managed** (paling seimbang antara keamanan & kenyamanan).
+3. Catat **Site Key** dan **Secret Key** yang muncul.
+4. Isi `VITE_TURNSTILE_SITE_KEY` di `.env` (lokal) dan di Environment Variables Vercel dengan Site Key tadi.
+5. Di **Supabase Dashboard** → Authentication → Settings → **Bot and Abuse Protection** → aktifkan **Enable CAPTCHA protection**, pilih provider **Turnstile**, lalu isi **Secret Key** (yang ini, BUKAN Site Key) di situ.
+6. Redeploy dashboard (push ke GitHub seperti biasa).
 
 ## Prasyarat backend
 Jalankan **berurutan** di SQL Editor Supabase:
