@@ -18,6 +18,7 @@ Jalankan **berurutan** di SQL Editor Supabase:
 1. `supabase/schema.sql` (kalau project baru / belum pernah dijalankan sama sekali)
 2. `supabase/migration_02_depot_role.sql` (sistem depot & superadmin)
 3. `supabase/migration_03_hapus_laporan.sql` (izin hapus laporan untuk superadmin)
+4. `supabase/migration_04_batasi_visibilitas.sql` (admin hanya bisa lihat/kelola petugas di depotnya, tidak bisa lihat admin lain/superadmin)
 
 Setelah migrasi, **wajib** dilakukan manual sekali (lihat komentar di akhir file migrasi):
 - Tambahkan minimal 1 baris di tabel `depots` untuk tiap lokasi (mis. "Depot Siak", "Depot Medan", dst).

@@ -29,11 +29,12 @@ Deno.serve(async (req) => {
     return new Response('Tidak bisa melakukan ini pada akun sendiri', { status: 400, headers: corsHeaders })
   }
 
-  // Admin biasa (bukan superadmin) hanya boleh kelola akun di depot sendiri.
+  // Admin biasa (bukan superadmin) hanya boleh kelola akun PETUGAS di depot sendiri
+  // -- tidak boleh menyentuh sesama admin ataupun superadmin, walau depotnya sama.
   if (isAdmin) {
-    const { data: target } = await admin.from('profiles').select('depot_id').eq('id', userId).single()
-    if (!target || target.depot_id !== callerProfile.depot_id) {
-      return new Response('Tidak boleh mengelola akun di luar depot Anda', { status: 403, headers: corsHeaders })
+    const { data: target } = await admin.from('profiles').select('role, depot_id').eq('id', userId).single()
+    if (!target || target.role !== 'user' || target.depot_id !== callerProfile.depot_id) {
+      return new Response('Tidak boleh mengelola akun ini', { status: 403, headers: corsHeaders })
     }
   }
 

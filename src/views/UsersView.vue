@@ -110,7 +110,7 @@ function labelRole(r) { return r === 'superadmin' ? 'Superadmin' : r === 'admin'
 
 <template>
   <div>
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; flex-wrap:wrap; gap:12px">
       <div>
         <h1 style="margin-bottom:4px">Users</h1>
         <p style="color:var(--text-muted); margin:0; font-size:13px">Kelola akun petugas &amp; admin yang boleh mengakses sistem.</p>
@@ -139,7 +139,7 @@ function labelRole(r) { return r === 'superadmin' ? 'Superadmin' : r === 'admin'
       </div>
     </div>
 
-    <form v-if="showForm" class="card" style="margin-bottom:20px; display:grid; gap:12px; grid-template-columns:1fr 1fr" @submit.prevent="tambahUser">
+    <form v-if="showForm" class="card form-grid" style="margin-bottom:20px" @submit.prevent="tambahUser">
       <div style="grid-column:1/-1; display:flex; align-items:center; gap:8px; color:var(--text-muted); font-size:13px; margin-bottom:-4px">
         <UserPlus :size="15" /> Akun baru langsung aktif, tanpa perlu verifikasi email
       </div>
@@ -253,4 +253,10 @@ function labelRole(r) { return r === 'superadmin' ? 'Superadmin' : r === 'admin'
 .modal { background: #fff; border-radius: 8px; padding: 20px; width: 360px; max-width: 92vw; }
 .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .modal-head h3 { font-size: 16px; }
+
+.form-grid { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
 </style>

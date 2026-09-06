@@ -215,4 +215,12 @@ const maxBulan = computed(() => Math.max(1, ...enamBulan.value.map((b) => b.juml
 .hbar-fill { height: 100%; background: var(--danger); border-radius: 999px; }
 .hbar-fill.accent2 { background: var(--accent); }
 .hbar-val { width: 20px; text-align: right; font-size: 12px; color: var(--text-muted); }
+
+@media (max-width: 860px) {
+  .grid-5 { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 420px) {
+  .grid-5 { grid-template-columns: 1fr; }
+}
 </style>

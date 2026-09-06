@@ -75,9 +75,10 @@ label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 20px;
+  overflow-x: auto;
 }
 
-table { width: 100%; border-collapse: collapse; }
+table { width: 100%; border-collapse: collapse; min-width: 560px; }
 th {
   text-align: left;
   font-size: 12px;
